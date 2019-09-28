@@ -51,18 +51,18 @@ public class JettyShare {
 
 
     @RegEx
-    public static final String ipv4addressExpr =
+    public static final String IPV_4_ADDRESS_EXPR =
             "(?<host>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})" +
             "(\\:(?<port>\\d{1,5}))?";
 
     @RegEx
-    public static final String ipv6addressExpr =
+    public static final String IPV_6_ADDRESS_EXPR =
             "(\\[(?<host>[0-9a-f\\:]+)\\])" +
             "(\\:(?<port>\\d{1,5}))?";
 
-    public Pattern ipv4address = Pattern.compile(ipv4addressExpr);
+    public Pattern ipv4address = Pattern.compile(IPV_4_ADDRESS_EXPR);
 
-    public Pattern ipv6address = Pattern.compile(ipv6addressExpr);
+    public Pattern ipv6address = Pattern.compile(IPV_6_ADDRESS_EXPR);
 
     public JettyShare(){
 
