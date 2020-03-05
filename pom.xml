@@ -12,8 +12,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.server.version>9.4.20.v20190813</jetty.server.version>
-        <slf4j.version>1.7.28</slf4j.version>
+        <jetty.server.version>9.4.27.v20200227</jetty.server.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <java.lang.version>11</java.lang.version>
         <java.target.version>11</java.target.version>
     </properties>
