@@ -32,6 +32,11 @@ thead th {
 	text-align: right;
 }
 
+.player {
+    width: 100px;
+    text-align: left;
+}
+
 a {
 	color: #7036be;
 	font-weight: bold;

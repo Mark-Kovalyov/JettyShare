@@ -33,7 +33,8 @@ public class DirectoryServlet extends HttpServlet {
     String root = "/storage"; //servletConfig.getInitParameter("root");
 
     private String trimPrefix(String prefix, String arg) {
-        return arg.substring(prefix.length());
+        int prefixLength = prefix.length();
+        return arg.substring(prefixLength);
     }
 
     private String getLeaveFromPath(String path) {
@@ -50,7 +51,7 @@ public class DirectoryServlet extends HttpServlet {
         return path.substring(0, path.lastIndexOf("/"));
     }
 
-    private void printHeader(PrintWriter out, String directory) {
+    private void printHeader(PrintWriter out, String directory, boolean withPlayer) {
         if (directory == null) {
             directory = "/";
         }
@@ -67,24 +68,34 @@ public class DirectoryServlet extends HttpServlet {
                 "<body>\n" +
                 "<h1 class=\"title\">Directory: ");
         out.print(directory);
-        out.println("</h1>\n" +
+        out.print("</h1>\n" +
                 "<table class=\"listing\">\n" +
                 "<thead>\n" +
                 "<tr>" +
                 "<th class=\"name\"><a href=\"?C=N&O=D\">Name&nbsp; &#8679;</a></th>" +
                 "<th class=\"lastmodified\"><a href=\"?C=M&O=A\">Last Modified</a></th>" +
-                "<th class=\"size\"><a href=\"?C=S&O=A\">Size</a></th></tr>\n" +
-                "</thead>\n" +
+                "<th class=\"size\"><a href=\"?C=S&O=A\">Size</a></th></tr>\n");
+        if (withPlayer) {
+            out.print("<th class='player'>Player</th>");
+        }
+        out.print("</thead>\n" +
                 "<tbody>");
     }
 
-    private void printRow(PrintWriter out, String name, String url, String lastModified, String size) {
+    private void printRow(PrintWriter out, String name, String url, String lastModified, String size, boolean withAudio) {
         out.printf(
                 "<tr>\n" +
                 " <td class=\"name\"><a href=\"%s\">%s&nbsp;</a></td>\n" +
                 " <td class=\"lastmodified\">%s&nbsp;</td>\n" +
-                " <td class=\"size\">%s&nbsp;</td>\n" +
-                "</tr>", url, name, lastModified, size);
+                " <td class=\"size\">%s&nbsp;</td>\n", url, name, lastModified, size);
+        if (withAudio) {
+            out.print(" <td class='player'>");
+            out.print("  <audio controls>");
+            out.printf("   <source src=\"%s\" type=\"%s\">", url, MimeHelper.getMimeByExtension(url));
+            out.print("  </audio>");
+            out.print(" </td>");
+        }
+        out.print("</tr>\n");
     }
 
     private void printFooter(PrintWriter out) {
@@ -97,13 +108,18 @@ public class DirectoryServlet extends HttpServlet {
     // globalPath ::= root + "/" + localPath
     //
 
+    // TODO: Add content-range
     public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String url = request.getParameter("load");
+        // Accept-Ranges: bytes
+        // curl http://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023"
         logger.info("Start uploading of {}", url);
         response.setContentType(MimeHelper.getMimeByExtension(url)); //);
         OutputStream outputStream = response.getOutputStream();
-        IOUtils.copy(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
-        logger.info("Finished");
+        long res = IOUtils.copyLarge(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
+        logger.info("Finished uploading of {} bytes", res);
+        // Content-Range: bytes 0-1023/146515
+        // Content-Length: 1024
         response.setStatus(SC_OK);
     }
 
@@ -137,12 +153,12 @@ public class DirectoryServlet extends HttpServlet {
 
         PrintWriter out = response.getWriter();
 
-        printHeader(out, localPath);
+        printHeader(out, localPath, true);
 
         if (isBlank(localPath) || localPath.equals("/")) {
-            printRow(out, "[..]", "", "", "");
+            printRow(out, "[..]", "", "", "", false);
         } else {
-            printRow(out, "[..]", "?lp=" + cutLeaveFromPath(localPath), "", "");
+            printRow(out, "[..]", "?lp=" + cutLeaveFromPath(localPath), "", "", false);
         }
 
         if (dir != null || dir.listFiles() == null) {
@@ -156,7 +172,7 @@ public class DirectoryServlet extends HttpServlet {
                             "[" + getLeaveFromPath(nodeGlobalPath) + "]",
                             "?lp=" + cpath,
                             simpleDateFormat.format(new Date(node.lastModified())),
-                            "");
+                            "", false);
                 }
             }
             for (File node : listFiles) {
@@ -167,14 +183,16 @@ public class DirectoryServlet extends HttpServlet {
                                 getLeaveFromPath(nodeGlobalPath),
                                 "?load=" + trimPrefix(root, nodeGlobalPath),
                                 simpleDateFormat.format(new Date(node.lastModified())),
-                                byteCountToDisplaySize(node.length()));
-                        printAudioControlBlock(out, "?load=" + trimPrefix(root, nodeGlobalPath));
+                                byteCountToDisplaySize(node.length()),
+                                true);
+                        //printAudioControlBlock(out, "?load=" + trimPrefix(root, nodeGlobalPath));
                     } else {
                         printRow(out,
                                 getLeaveFromPath(nodeGlobalPath),
                                 "?load=" + trimPrefix(root, nodeGlobalPath),
                                 simpleDateFormat.format(new Date(node.lastModified())),
-                                byteCountToDisplaySize(node.length()));
+                                byteCountToDisplaySize(node.length()),
+                                false);
                     }
                 }
             }
@@ -186,9 +204,7 @@ public class DirectoryServlet extends HttpServlet {
     }
 
     private void printAudioControlBlock(PrintWriter out, String url) {
-        out.print("<audio controls>");
-        out.printf(" <source src=\"%s\" type=\"%s\">", url, MimeHelper.getMimeByExtension(url));
-        out.println("</audio>");
+
     }
 
     private boolean isAudio(File node) throws IOException {
