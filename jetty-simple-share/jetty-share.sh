@@ -1,4 +1,4 @@
 #!/bin/bash
 
-java -server -jar JettyShare-*.jar $1 $2
+java -server -jar target/jetty-share-*.jar $1 $2
 
