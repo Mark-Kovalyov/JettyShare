@@ -55,6 +55,7 @@ public class MediaShare {
 
     public MediaShare(String[] args) throws Exception {
 
+
         Server server = new Server();
 
         initJMX(server);
@@ -79,9 +80,14 @@ public class MediaShare {
         //servletContextHandler.setContextPath("/root");
         servletContextHandler.addServlet(DirectoryServlet.class, "/");
 
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setResourceBase("css");
+        resourceHandler.setDirectoriesListed(false);
+
         HandlerCollection handlers = new HandlerCollection();
 
         handlers.setHandlers(new Handler[] {
+                resourceHandler,
                 servletContextHandler,
                 new DefaultHandler() }
         );
@@ -95,9 +101,8 @@ public class MediaShare {
     }
 
     public static void main(String[] args) throws Exception {
-
+        System.setProperty("log4j.configurationFile", "log4j2.xml");
         new MediaShare(args);
-
     }
 
 }
