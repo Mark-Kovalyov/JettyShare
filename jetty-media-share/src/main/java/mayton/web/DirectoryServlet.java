@@ -1,5 +1,6 @@
 package mayton.web;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,23 +74,28 @@ public class DirectoryServlet extends HttpServlet {
         String localPath = trimPrefix(root, path).substring(1);
 
         logger.info("path = {}", path);
-        File dir = new File(path);
-        response.setContentType("text/html");
 
+        File dir = new File(path);
+
+        response.setContentType("text/html");
 
         PrintWriter out = response.getWriter();
 
         printHeader(out, localPath);
 
-        if (dir != null) {
+        if (dir != null || dir.listFiles() == null) {
             File[] listFiles = dir.listFiles();
             logger.info("listfiles.length = {}", listFiles.length);
             for (File node : listFiles) {
                 String cpath = node.toPath().toString();
                 if (node.isDirectory()) {
+                    String link = trimPrefix(path, cpath);
+                    if (link.startsWith("/")) {
+                        link = link.substring(1);
+                    }
                     printRow(out,
-                            trimPrefix(path, cpath),
-                            trimPrefix(path, cpath),
+                            "[" + link + "]",
+                            link,
                             simpleDateFormat.format(new Date(node.lastModified())),
                             "");
                 }
@@ -101,11 +107,11 @@ public class DirectoryServlet extends HttpServlet {
                             trimPrefix(path, cpath),
                             trimPrefix(path, cpath),
                             simpleDateFormat.format(new Date(node.lastModified())),
-                            String.valueOf(node.length()));
+                            FileUtils.byteCountToDisplaySize(node.length()));
                 }
             }
         } else {
-            logger.warn("dir is null!");
+            logger.warn("dir is null or listFiles is null for node = {}!", dir);
         }
         printFooter(out);
         response.setStatus(SC_OK);
