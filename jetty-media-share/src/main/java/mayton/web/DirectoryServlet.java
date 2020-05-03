@@ -1,10 +1,6 @@
 package mayton.web;
 
-import org.apache.commons.codec.binary.StringUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,13 +10,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.URLEncoder;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
+import static java.util.Arrays.asList;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static mayton.web.MediaStringUtils.getExtension;
+import static mayton.web.MimeHelper.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 import static org.eclipse.jetty.util.StringUtil.isBlank;
 
@@ -91,7 +88,7 @@ public class DirectoryServlet extends HttpServlet {
         if (withAudio) {
             out.print(" <td class='player'>");
             out.print("  <audio controls>");
-            out.printf("   <source src=\"%s\" type=\"%s\">", url, MimeHelper.getMimeByExtension(url));
+            out.printf("   <source src=\"%s\" type=\"%s\">", url, getMimeByExtensionOrDefault(Optional.of(url), ""));
             out.print("  </audio>");
             out.print(" </td>");
         }
@@ -114,7 +111,7 @@ public class DirectoryServlet extends HttpServlet {
         // Accept-Ranges: bytes
         // curl http://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023"
         logger.info("Start uploading of {}", url);
-        response.setContentType(MimeHelper.getMimeByExtension(url)); //);
+        response.setContentType(getMimeByExtenensionOrOctet(getExtension(url))); //);
         OutputStream outputStream = response.getOutputStream();
         long res = IOUtils.copyLarge(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
         logger.info("Finished uploading of {} bytes", res);
@@ -175,6 +172,7 @@ public class DirectoryServlet extends HttpServlet {
                             "", false);
                 }
             }
+
             for (File node : listFiles) {
                 if (!node.isDirectory()) {
                     String nodeGlobalPath = node.toPath().toString();
@@ -196,6 +194,20 @@ public class DirectoryServlet extends HttpServlet {
                     }
                 }
             }
+
+            if (directoryContainsVideo(listFiles)) {
+                asList(listFiles)
+                        .stream()
+                        .filter(node -> !node.isDirectory())
+                        .forEach(node -> {
+                            String nodeGlobalPath = node.toPath().toString();
+                            out.println("<video width='640' height='480' control>");
+                            out.printf("    <src='?load=%s' type='%s'\n>", trimPrefix(root, nodeGlobalPath), getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)));
+                            out.println(" Your browser doesn't support HTML5 video tag.");
+                            out.println("</video>");
+                            out.println("<br>");
+                        });
+            }
         } else {
             logger.warn("dir is null or listFiles is null for node = {}!", dir);
         }
@@ -203,12 +215,15 @@ public class DirectoryServlet extends HttpServlet {
         response.setStatus(SC_OK);
     }
 
-    private void printAudioControlBlock(PrintWriter out, String url) {
+    private boolean directoryContainsVideo(File[] listFiles) {
+        Optional<String> res = asList(listFiles).stream()
+                .filter(File::isDirectory)
+                .map(item -> item.toPath().toString())
+                .filter(item -> isVideo(item))
+                .findAny();
 
+        return res.isPresent();
     }
 
-    private boolean isAudio(File node) throws IOException {
-        String lowerFileName = node.getCanonicalFile().toString().toLowerCase();
-        return (lowerFileName.endsWith(".mp3") || lowerFileName.endsWith(".ogg"));
-    }
+
 }
