@@ -66,11 +66,15 @@ public class MimeHelper {
         }
     }
 
-    public static boolean isAudio(File node) throws IOException {
-        String lowerFileName = node.getCanonicalFile().toString();
-        Optional<String> mime = getMimeByExtension(getExtension(lowerFileName));
-        if (mime.isEmpty()) return false;
-        return mime.get().startsWith("audio/");
+    public static boolean isAudio(String path) {
+        Optional<String> extension = getExtension(path);
+        if (extension.isEmpty()) {
+            return false;
+        } else {
+            Optional<String> mime = getMimeByExtension(extension);
+            if (mime.isEmpty()) return false;
+            return mime.get().startsWith("audio/");
+        }
     }
 
 }

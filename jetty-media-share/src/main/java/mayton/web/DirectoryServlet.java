@@ -11,12 +11,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
-import static mayton.web.MediaStringUtils.getExtension;
+import static mayton.web.MediaStringUtils.*;
 import static mayton.web.MimeHelper.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 import static org.eclipse.jetty.util.StringUtil.isBlank;
@@ -28,25 +29,6 @@ public class DirectoryServlet extends HttpServlet {
     ServletConfig servletConfig = getServletConfig();
 
     String root = "/storage"; //servletConfig.getInitParameter("root");
-
-    private String trimPrefix(String prefix, String arg) {
-        int prefixLength = prefix.length();
-        return arg.substring(prefixLength);
-    }
-
-    private String getLeaveFromPath(String path) {
-        if (path.isBlank() || !path.contains("/")) {
-            return "";
-        }
-        return path.substring(path.lastIndexOf("/") + 1);
-    }
-
-    private String cutLeaveFromPath(String path) {
-        if (path.isBlank() || !path.contains("/")) {
-            return "";
-        }
-        return path.substring(0, path.lastIndexOf("/"));
-    }
 
     private void printDocumentHeader(PrintWriter out, String directory) {
         if (directory == null) {
@@ -107,8 +89,6 @@ public class DirectoryServlet extends HttpServlet {
     private void printDocumentFooter(PrintWriter out) {
         out.println("</body>");
     }
-
-
 
 
     // globalPath ::= root + "/" + localPath
@@ -172,47 +152,39 @@ public class DirectoryServlet extends HttpServlet {
         if (dir != null || dir.listFiles() == null) {
             File[] listFiles = dir.listFiles();
             logger.info("listfiles.length = {}", listFiles.length);
-            for (File node : listFiles) {
-                if (node.isDirectory()) {
-                    String nodeGlobalPath = node.toPath().toString();
-                    String cpath = trimPrefix(root, nodeGlobalPath);
-                    printRow(out,
-                            "[" + getLeaveFromPath(nodeGlobalPath) + "]",
-                            "?lp=" + cpath,
-                            simpleDateFormat.format(new Date(node.lastModified())),
-                            "", false);
-                }
-            }
 
-            for (File node : listFiles) {
-                if (!node.isDirectory()) {
-                    String nodeGlobalPath = node.toPath().toString();
-                    if (isAudio(node)) {
+            Arrays.stream(listFiles)
+                    .filter(File::isDirectory)
+                    .forEach(directory -> {
+                        String nodeGlobalPath = directory.toPath().toString();
+                        String localUrl = trimPrefix(root, nodeGlobalPath);
                         printRow(out,
-                                getLeaveFromPath(nodeGlobalPath),
+                                "[" + getLeaveFromPath(nodeGlobalPath).orElse("[empty]") + "]",
+                                "?lp=" + localUrl,
+                                simpleDateFormat.format(new Date(directory.lastModified())),
+                                "", false);
+                    });
+
+
+            Arrays.stream(listFiles)
+                    .filter(node -> !node.isDirectory())
+                    .forEach(node -> {
+                        String nodeGlobalPath = node.toPath().toString();
+                        Optional<String> optionalName = getLeaveFromPath(nodeGlobalPath);
+                        optionalName.ifPresent(s -> printRow(out,
+                                s,
                                 "?load=" + trimPrefix(root, nodeGlobalPath),
                                 simpleDateFormat.format(new Date(node.lastModified())),
                                 byteCountToDisplaySize(node.length()),
-                                true);
-                    } else {
-                        printRow(out,
-                                getLeaveFromPath(nodeGlobalPath),
-                                "?load=" + trimPrefix(root, nodeGlobalPath),
-                                simpleDateFormat.format(new Date(node.lastModified())),
-                                byteCountToDisplaySize(node.length()),
-                                false);
-                    }
-                }
-            }
+                                isAudio(s)));
+                    });
+
 
             printTableFooter(out);
 
-            logger.info(":: point 1");
-
             if (directoryContainsVideo(listFiles)) {
                 logger.info("Contains video");
-                asList(listFiles)
-                        .stream()
+                Arrays.stream(listFiles)
                         .filter(node -> !node.isDirectory())
                         .filter(node -> MimeHelper.isVideo(node.toPath().toString()))
                         .forEach(node -> {
@@ -236,12 +208,10 @@ public class DirectoryServlet extends HttpServlet {
     }
 
     private boolean directoryContainsVideo(File[] listFiles) {
-
-        // TODO: Fix
-        Optional<String> res = asList(listFiles).stream()
+        Optional<String> res = Arrays.stream(listFiles)
                 .filter(node -> !node.isDirectory())
                 .map(node -> node.toPath().toString())
-                .filter(path -> isVideo(path))
+                .filter(MimeHelper::isVideo)
                 .findAny();
 
         return res.isPresent();

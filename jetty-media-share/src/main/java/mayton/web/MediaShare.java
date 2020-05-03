@@ -33,28 +33,11 @@ public class MediaShare {
         server.addBean(Log.getLog());
     }
 
-    public void upgradeContextHandlerWithMime(ContextHandler contextHandler) throws IOException {
-        Properties props = new Properties();
-        MimeTypes mime = new MimeTypes();
-        InputStream in = MediaShare.class.getResourceAsStream("mime.properties");
-        props.load(in);
-        Enumeration<Object> keys = props.keys();
-        while(keys.hasMoreElements()){
-            String key = (String)keys.nextElement();
-            String value = props.getProperty(key);
-            logger.info("Add mime type {} for extension {}",value,key);
-            mime.addMimeMapping(key,value);
-        }
-        contextHandler.setMimeTypes(mime);
-    }
-
-
     public MediaShare(){
 
     }
 
     public MediaShare(String[] args) throws Exception {
-
 
         Server server = new Server();
 

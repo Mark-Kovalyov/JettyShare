@@ -1,7 +1,4 @@
 #!/bin/bash -v
 
-mvn clean compile package
-
-echo "Status code $?"
-
+mvn clean compile package -DskipTests
 
