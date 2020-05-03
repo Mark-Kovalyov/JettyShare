@@ -24,7 +24,13 @@ thead th {
 	border-bottom: black 1px solid;
 }
 
-.name, .lastmodified {
+.name {
+    width: 50%;
+	text-align: left;
+	padding-right: 15px;
+}
+
+.lastmodified {
 	text-align: left;
 	padding-right: 15px;
 }

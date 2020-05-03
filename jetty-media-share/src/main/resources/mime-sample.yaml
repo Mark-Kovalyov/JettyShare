@@ -1,0 +1,51 @@
+# Images
+
+image:
+  - gif : [ gif ]
+  - png : [ png ]
+  - jpeg : [ jpeg, jpg ]
+  - jp2 : [ jp2, j2k, jpf, jpm, jpg2, j2c jpc]
+  - webp : [ webp ]
+  - svg : [ svg+xml ]
+  - quicktime : [ mov ]
+  - x-pordiv-pixmap : [ ppm ]
+  - x-pordiv-graymap : [pgm]
+  - x-pordiv-anymap : [pnm]
+
+# Video:
+
+video:
+  - avi : [ avi ]
+  - mp4 : [ mp4,m4v ]
+  - 3gpp : [ 3gpp, 3gp ]
+  - webm : [ webm ]
+
+
+# Audio
+
+audio:
+  - aac : [ aac ]
+  - mpeg : [ mp3 ]
+
+
+
+# documents
+
+pdf : application/pdf
+djvu : image/x-djvu
+xls : application/x-msexcel
+doc : application/msword
+ppt : application/mspowerpoint
+
+# Video
+
+
+
+# sound
+
+mp3 : audio/mpeg
+ogg : audio/ogg
+aac : audio/aac
+wma : audio/x-ms-wma
+wav : audio/vnd.wave
+flac : audio/flac

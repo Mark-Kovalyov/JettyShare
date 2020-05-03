@@ -54,12 +54,13 @@ public class DirectoryServlet extends HttpServlet {
                 "<table class=\"listing\">\n" +
                 "<thead>\n" +
                 "<tr>" +
-                "<th class=\"name\"><a href=\"?C=N&O=D\">Name&nbsp; &#8679;</a></th>" +
-                "<th class=\"lastmodified\"><a href=\"?C=M&O=A\">Last Modified</a></th>" +
-                "<th class=\"size\"><a href=\"?C=S&O=A\">Size</a></th></tr>\n");
+                " <th class=\"name\">Name&nbsp;</th>" +
+                " <th class=\"lastmodified\">Last Modified&nbsp;</th>" +
+                " <th class=\"size\">Size&nbsp;</th>");
         if (withPlayer) {
             out.print("<th class='player'>Player</th>");
         }
+        out.println("</tr>");
         out.print("</thead>\n");
     }
 
