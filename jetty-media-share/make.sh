@@ -2,3 +2,6 @@
 
 mvn clean compile package
 
+echo "Status code $?"
+
+

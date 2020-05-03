@@ -48,7 +48,7 @@ public class DirectoryServlet extends HttpServlet {
         return path.substring(0, path.lastIndexOf("/"));
     }
 
-    private void printHeader(PrintWriter out, String directory, boolean withPlayer) {
+    private void printDocumentHeader(PrintWriter out, String directory) {
         if (directory == null) {
             directory = "/";
         }
@@ -61,9 +61,12 @@ public class DirectoryServlet extends HttpServlet {
         out.print(directory);
         out.print(
                 "</title>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "<h1 class=\"title\">Directory: ");
+                        "</head>\n" +
+                        "<body>\n");
+    }
+
+    private void printTableHeader(PrintWriter out, String directory, boolean withPlayer) {
+        out.print("<h1 class=\"title\">Directory: ");
         out.print(directory);
         out.print("</h1>\n" +
                 "<table class=\"listing\">\n" +
@@ -75,8 +78,7 @@ public class DirectoryServlet extends HttpServlet {
         if (withPlayer) {
             out.print("<th class='player'>Player</th>");
         }
-        out.print("</thead>\n" +
-                "<tbody>");
+        out.print("</thead>\n");
     }
 
     private void printRow(PrintWriter out, String name, String url, String lastModified, String size, boolean withAudio) {
@@ -86,20 +88,27 @@ public class DirectoryServlet extends HttpServlet {
                 " <td class=\"lastmodified\">%s&nbsp;</td>\n" +
                 " <td class=\"size\">%s&nbsp;</td>\n", url, name, lastModified, size);
         if (withAudio) {
-            out.print(" <td class='player'>");
-            out.print("  <audio controls>");
-            out.printf("   <source src=\"%s\" type=\"%s\">", url, getMimeByExtensionOrDefault(Optional.of(url), ""));
-            out.print("  </audio>");
-            out.print(" </td>");
+            Optional<String> optionalExtension = MediaStringUtils.getExtension(url);
+            if (getMimeByExtension(optionalExtension).isPresent()) {
+                out.print(" <td class='player'>");
+                out.print("  <audio controls>");
+                out.printf("   <source src=\"%s\" type=\"%s\">", url, getMimeByExtension(optionalExtension).get());
+                out.print("  </audio>");
+                out.print(" </td>");
+            }
         }
         out.print("</tr>\n");
     }
 
-    private void printFooter(PrintWriter out) {
-        out.println("</tbody>\n" +
-                "</table>\n" +
-                "</body></html>");
+    private void printTableFooter(PrintWriter out) {
+        out.println("</table>");
     }
+
+    private void printDocumentFooter(PrintWriter out) {
+        out.println("</body>");
+    }
+
+
 
 
     // globalPath ::= root + "/" + localPath
@@ -150,7 +159,9 @@ public class DirectoryServlet extends HttpServlet {
 
         PrintWriter out = response.getWriter();
 
-        printHeader(out, localPath, true);
+        printDocumentHeader(out, localPath);
+
+        printTableHeader(out, localPath, true);
 
         if (isBlank(localPath) || localPath.equals("/")) {
             printRow(out, "[..]", "", "", "", false);
@@ -183,7 +194,6 @@ public class DirectoryServlet extends HttpServlet {
                                 simpleDateFormat.format(new Date(node.lastModified())),
                                 byteCountToDisplaySize(node.length()),
                                 true);
-                        //printAudioControlBlock(out, "?load=" + trimPrefix(root, nodeGlobalPath));
                     } else {
                         printRow(out,
                                 getLeaveFromPath(nodeGlobalPath),
@@ -195,31 +205,43 @@ public class DirectoryServlet extends HttpServlet {
                 }
             }
 
+            printTableFooter(out);
+
+            logger.info(":: point 1");
+
             if (directoryContainsVideo(listFiles)) {
+                logger.info("Contains video");
                 asList(listFiles)
                         .stream()
                         .filter(node -> !node.isDirectory())
+                        .filter(node -> MimeHelper.isVideo(node.toPath().toString()))
                         .forEach(node -> {
                             String nodeGlobalPath = node.toPath().toString();
-                            out.println("<video width='640' height='480' control>");
-                            out.printf("    <src='?load=%s' type='%s'\n>", trimPrefix(root, nodeGlobalPath), getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)));
-                            out.println(" Your browser doesn't support HTML5 video tag.");
-                            out.println("</video>");
-                            out.println("<br>");
+                            out.printf("<h5>%s</h5>\n", getLeaveFromPath(nodeGlobalPath));
+                            out.printf("<video width = \"640\" height = \"480\" controls>\n");
+                            out.printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
+                                    trimPrefix(root, nodeGlobalPath),
+                                    getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)));
+                            out.printf("</video>\n");
+                            out.printf("<br>\n");
                         });
+            } else {
+                logger.info("Doesn't contains");
             }
         } else {
             logger.warn("dir is null or listFiles is null for node = {}!", dir);
         }
-        printFooter(out);
+        printDocumentFooter(out);
         response.setStatus(SC_OK);
     }
 
     private boolean directoryContainsVideo(File[] listFiles) {
+
+        // TODO: Fix
         Optional<String> res = asList(listFiles).stream()
-                .filter(File::isDirectory)
-                .map(item -> item.toPath().toString())
-                .filter(item -> isVideo(item))
+                .filter(node -> !node.isDirectory())
+                .map(node -> node.toPath().toString())
+                .filter(path -> isVideo(path))
                 .findAny();
 
         return res.isPresent();

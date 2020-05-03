@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
+import static mayton.web.MediaStringUtils.getExtension;
+
 public class MimeHelper {
 
     static Logger logger = LoggerFactory.getLogger("MimeHelper");
@@ -40,15 +42,21 @@ public class MimeHelper {
 
 
     public static Optional<String> getMimeByExtension(Optional<String> extension) {
-        if (extension.isEmpty()) return Optional.of("application/octet-stream");
+        if (extension.isEmpty()) {
+            logger.info("getMimeByExtension {} -> application/octet-stream", extension);
+            return Optional.of("application/octet-stream");
+        }
         String res = properties.getProperty(extension.get());
-        if (res == null) return Optional.empty();
+        if (res == null) {
+            logger.info("getMimeByExtension {} -> EMPTY", extension, res);
+            return Optional.empty();
+        }
         logger.info("getMimeByExtension {} -> {}", extension, res);
         return Optional.of(res);
     }
 
     public static boolean isVideo(String path) {
-        Optional<String> extension = MediaStringUtils.getExtension(path);
+        Optional<String> extension = getExtension(path);
         if (extension.isEmpty()) {
             return false;
         } else {
@@ -60,7 +68,7 @@ public class MimeHelper {
 
     public static boolean isAudio(File node) throws IOException {
         String lowerFileName = node.getCanonicalFile().toString();
-        Optional<String> mime = getMimeByExtension(MediaStringUtils.getExtension(lowerFileName));
+        Optional<String> mime = getMimeByExtension(getExtension(lowerFileName));
         if (mime.isEmpty()) return false;
         return mime.get().startsWith("audio/");
     }
