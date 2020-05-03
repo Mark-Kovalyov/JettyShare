@@ -1,11 +1,9 @@
 package mayton.web;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -22,7 +20,7 @@ public class MimeHelper {
         try {
             properties.load(MimeHelper.class.getClassLoader().getResourceAsStream("mime.properties"));
             properties.stringPropertyNames().stream().forEach(item -> {
-                logger.info("mime: {} -> {}", item, properties.get(item));
+                logger.info("Init mime: {} -> {}", item, properties.get(item));
             });
         } catch (Exception ex) {
             logger.error(ex.toString());
@@ -33,29 +31,28 @@ public class MimeHelper {
         return getMimeByExtensionOrDefault(extension, "application/octet-stream");
     }
 
-    public static String getMimeByExtensionOrDefault(Optional<String> extension, String replacement) {
+    public static String getMimeByExtensionOrDefault(Optional<String> extension, @NotNull String replacement) {
         if (extension.isEmpty()) return replacement;
         String res = (String) properties.getOrDefault(extension.get(), replacement);
-        logger.info("getMimeByExtension {} -> {}", extension, res);
         return res;
     }
 
 
     public static Optional<String> getMimeByExtension(Optional<String> extension) {
         if (extension.isEmpty()) {
-            logger.info("getMimeByExtension {} -> application/octet-stream", extension);
+            //logger.info("getMimeByExtension {} -> application/octet-stream", extension);
             return Optional.of("application/octet-stream");
         }
         String res = properties.getProperty(extension.get());
         if (res == null) {
-            logger.info("getMimeByExtension {} -> EMPTY", extension, res);
+            //logger.info("getMimeByExtension {} -> EMPTY", extension, res);
             return Optional.empty();
         }
-        logger.info("getMimeByExtension {} -> {}", extension, res);
+        //logger.info("getMimeByExtension {} -> {}", extension, res);
         return Optional.of(res);
     }
 
-    public static boolean isVideo(String path) {
+    public static boolean isVideo(@NotNull String path) {
         Optional<String> extension = getExtension(path);
         if (extension.isEmpty()) {
             return false;
@@ -66,7 +63,7 @@ public class MimeHelper {
         }
     }
 
-    public static boolean isAudio(String path) {
+    public static boolean isAudio(@NotNull String path) {
         Optional<String> extension = getExtension(path);
         if (extension.isEmpty()) {
             return false;

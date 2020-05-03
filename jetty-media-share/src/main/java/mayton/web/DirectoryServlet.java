@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
-import static java.util.Arrays.asList;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static mayton.web.MediaStringUtils.*;
 import static mayton.web.MimeHelper.*;
@@ -31,16 +30,13 @@ public class DirectoryServlet extends HttpServlet {
     String root = "/storage"; //servletConfig.getInitParameter("root");
 
     private void printDocumentHeader(PrintWriter out, String directory) {
-        if (directory == null) {
-            directory = "/";
-        }
         out.print("<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
                 "<head>\n" +
                 "<meta charset=\"utf-8\">\n" +
                 "<link href=\"css/jetty-dir.css\" rel=\"stylesheet\" />\n" +
-                "<title>Directory:");
-        out.print(directory);
+                "<title>Directory # :");
+        out.print(directory == null ? "/" : directory);
         out.print(
                 "</title>\n" +
                         "</head>\n" +
@@ -48,8 +44,8 @@ public class DirectoryServlet extends HttpServlet {
     }
 
     private void printTableHeader(PrintWriter out, String directory, boolean withPlayer) {
-        out.print("<h1 class=\"title\">Directory: ");
-        out.print(directory);
+        out.print("<h1 class=\"title\">Directory : ");
+        out.print(directory == null ? "/" : directory);
         out.print("</h1>\n" +
                 "<table class=\"listing\">\n" +
                 "<thead>\n" +
@@ -110,8 +106,21 @@ public class DirectoryServlet extends HttpServlet {
         response.setStatus(SC_OK);
     }
 
+    private void dumpRequestParams(HttpServletRequest request) {
+        logger.info("GET uri = {} user = {}, host = {}, url = {}, uri = {}",
+                request.getRequestURI(),
+                request.getRemoteUser(),
+                request.getRemoteHost(),
+                request.getRequestURL());
+        request.getParameterMap().entrySet().stream().forEach(item -> {
+            logger.info(" {} : '{}'", item.getKey(), item.getValue());
+        });
+        logger.info("");
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        dumpRequestParams(request);
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
@@ -122,7 +131,7 @@ public class DirectoryServlet extends HttpServlet {
             return;
         }
 
-        logger.info("localPath = {}", localPath);
+        logger.info("localPath = '{}'", localPath);
 
         File dir;
 
@@ -151,7 +160,6 @@ public class DirectoryServlet extends HttpServlet {
         }
 
             File[] listFiles = dir.listFiles();
-            logger.info("listfiles.length = {}", listFiles.length);
 
             Arrays.stream(listFiles)
                     .filter(File::isDirectory)
@@ -197,8 +205,6 @@ public class DirectoryServlet extends HttpServlet {
                             out.printf("</video>\n");
                             out.printf("<br>\n");
                         });
-            } else {
-                logger.info("Doesn't contains");
             }
 
         printDocumentFooter(out);
