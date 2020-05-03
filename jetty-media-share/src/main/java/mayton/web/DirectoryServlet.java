@@ -149,7 +149,6 @@ public class DirectoryServlet extends HttpServlet {
             printRow(out, "[..]", "?lp=" + cutLeaveFromPath(localPath), "", "", false);
         }
 
-        if (dir != null || dir.listFiles() == null) {
             File[] listFiles = dir.listFiles();
             logger.info("listfiles.length = {}", listFiles.length);
 
@@ -200,9 +199,7 @@ public class DirectoryServlet extends HttpServlet {
             } else {
                 logger.info("Doesn't contains");
             }
-        } else {
-            logger.warn("dir is null or listFiles is null for node = {}!", dir);
-        }
+
         printDocumentFooter(out);
         response.setStatus(SC_OK);
     }
