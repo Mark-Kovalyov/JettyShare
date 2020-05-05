@@ -32,14 +32,14 @@ public class MimeHelper {
     }
 
     public static String getMimeByExtensionOrDefault(Optional<String> extension, @NotNull String replacement) {
-        if (extension.isEmpty()) return replacement;
+        if (!extension.isPresent()) return replacement;
         String res = (String) properties.getOrDefault(extension.get(), replacement);
         return res;
     }
 
 
     public static Optional<String> getMimeByExtension(Optional<String> extension) {
-        if (extension.isEmpty()) {
+        if (!extension.isPresent()) {
             //logger.info("getMimeByExtension {} -> application/octet-stream", extension);
             return Optional.of("application/octet-stream");
         }
@@ -54,22 +54,22 @@ public class MimeHelper {
 
     public static boolean isVideo(@NotNull String path) {
         Optional<String> extension = getExtension(path);
-        if (extension.isEmpty()) {
+        if (!extension.isPresent()) {
             return false;
         } else {
             Optional<String> mime = getMimeByExtension(extension);
-            if (mime.isEmpty()) return false;
+            if (!mime.isPresent()) return false;
             return mime.get().startsWith("video/");
         }
     }
 
     public static boolean isAudio(@NotNull String path) {
         Optional<String> extension = getExtension(path);
-        if (extension.isEmpty()) {
+        if (!extension.isPresent()) {
             return false;
         } else {
             Optional<String> mime = getMimeByExtension(extension);
-            if (mime.isEmpty()) return false;
+            if (!mime.isPresent()) return false;
             return mime.get().startsWith("audio/");
         }
     }

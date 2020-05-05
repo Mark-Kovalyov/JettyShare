@@ -1,5 +1,6 @@
 package mayton.web;
 
+import org.eclipse.jetty.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -22,14 +23,14 @@ public class MediaStringUtils {
     }
 
     public static Optional<String> getLeaveFromPath(@NotNull String path) {
-        if (path.isBlank() || !path.contains("/")) {
+        if (StringUtil.isBlank(path) || !path.contains("/")) {
             return Optional.empty();
         }
         return Optional.of(path.substring(path.lastIndexOf("/") + 1));
     }
 
     public static Optional<String> cutLeaveFromPath(@NotNull String path) {
-        if (path.isBlank() || !path.contains("/")) {
+        if (StringUtil.isBlank(path) || !path.contains("/")) {
             return Optional.empty();
         }
         return Optional.of(path.substring(0, path.lastIndexOf("/")));

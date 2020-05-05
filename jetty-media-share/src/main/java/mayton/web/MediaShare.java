@@ -23,7 +23,7 @@ import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SESSIONS;
 
 public class MediaShare {
 
-    static Logger logger = LoggerFactory.getLogger("JettyShare");
+    //static Logger logger = LoggerFactory.getLogger("JettyShare");
 
     public void  initJMX(Server server){
         // Setup JMX
@@ -43,14 +43,14 @@ public class MediaShare {
 
         initJMX(server);
 
-        server.setRequestLog((request, response) ->
+        /*server.setRequestLog((request, response) ->
                 logger.info("{} {}", request.getRemoteHost(), request.getRequestURI()
-        ));
+        ));*/
 
         ServerConnector connector = new ServerConnector(server);
 
-        int port    = 8081;
-        String host = "192.168.1.103";
+        int port    = 8082;
+        String host = "127.0.0.1";
 
         connector.setPort(port);
         connector.setHost(host);
