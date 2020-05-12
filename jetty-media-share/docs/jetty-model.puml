@@ -1,0 +1,19 @@
+@startuml
+object Server
+object ServerConnector
+object ServletContextHandler
+object ResourceHandler
+object HandlerCollection
+object DefaultHandler
+object ContextHandler
+object RequestLog
+
+Server *-- ContextHandler
+Server o-- ServerConnector
+Server *-- HandlerCollection
+Server *-- RequestLog
+HandlerCollection o-- ResourceHandler
+HandlerCollection o-- ServletContextHandler
+HandlerCollection o-- DefaultHandler
+
+@enduml

@@ -10,10 +10,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.http.HttpResponse;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static mayton.web.MediaStringUtils.*;
@@ -27,7 +26,16 @@ public class DirectoryServlet extends HttpServlet {
 
     ServletConfig servletConfig = getServletConfig();
 
-    String root = "/storage"; //servletConfig.getInitParameter("root");
+    String root = "~";
+
+    public DirectoryServlet(String root) {
+        this.root = root;
+    }
+
+    // Accept-Ranges: bytes
+    private void enrichResponeByStandardTags(HttpServletResponse resp) {
+        resp.addHeader("Accept-Ranges", "bytes");
+    }
 
     private void printDocumentHeader(PrintWriter out, String directory) {
         out.print("<!DOCTYPE html>\n" +
@@ -94,15 +102,21 @@ public class DirectoryServlet extends HttpServlet {
     // TODO: Add content-range
     public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String url = request.getParameter("load");
-        // Accept-Ranges: bytes
-        // curl http://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023"
-        logger.info("Start uploading of {}", url);
-        response.setContentType(getMimeByExtenensionOrOctet(getExtension(url))); //);
-        OutputStream outputStream = response.getOutputStream();
-        long res = IOUtils.copyLarge(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
-        logger.info("Finished uploading of {} bytes", res);
-        // Content-Range: bytes 0-1023/146515
-        // Content-Length: 1024
+        if (request.getHeader("Range") != null) {
+            logger.info("Request range uploading of {}", url);
+            throw new RuntimeException("Not implemented yet!");
+            // TODO:
+        } else {            //
+            // curl http://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023"
+            logger.info("Request full uploading of {}", url);
+            response.setContentType(getMimeByExtenensionOrOctet(getExtension(url))); //);
+            OutputStream outputStream = response.getOutputStream();
+            long res = IOUtils.copyLarge(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
+            logger.info("Finished uploading of {} bytes", res);
+            // Content-Range: bytes 0-1023/146515
+            // Content-Length: 1024
+        }
+        enrichResponeByStandardTags(response);
         response.setStatus(SC_OK);
     }
 

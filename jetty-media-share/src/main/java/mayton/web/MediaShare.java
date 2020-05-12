@@ -5,6 +5,7 @@ import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class MediaShare {
         ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
 
         //servletContextHandler.setContextPath("/root");
-        servletContextHandler.addServlet(DirectoryServlet.class, "/");
+        servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
 
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setResourceBase("css");
