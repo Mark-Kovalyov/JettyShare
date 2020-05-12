@@ -1,6 +1,7 @@
 @startuml
 object Server
 object ServerConnector
+object SocketConnector
 object ServletContextHandler
 object ResourceHandler
 object HandlerCollection
@@ -8,7 +9,8 @@ object DefaultHandler
 object ContextHandler
 object RequestLog
 
-Server *-- ContextHandler
+Server *-- ContextHandle
+Server o-- SocketConnector
 Server o-- ServerConnector
 Server *-- HandlerCollection
 Server *-- RequestLog

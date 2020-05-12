@@ -1,5 +1,5 @@
 #!/bin/bash
 
-java -jar target/jetty-media-share-*.jar $1 $2
+java -jar target/jetty-media-share-*.jar $WIRED_INTERFACE 8082 /storage
 
 
