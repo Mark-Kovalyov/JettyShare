@@ -267,7 +267,7 @@ public class DirectoryServlet extends HttpServlet {
                         .forEach(node -> {
                             String nodeGlobalPath = node.toPath().toString();
                             out.printf("<h5>%s</h5>\n", getLeaveFromFilePath(nodeGlobalPath))
-                               .printf("<video width = \"640\" height = \"480\" controls>\n")
+                               .printf("<video width = \"640\" height = \"480\" controls preload=\"metadata\">\n")
                                .printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
                                     trimPrefix(root, nodeGlobalPath),
                                     getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)))
