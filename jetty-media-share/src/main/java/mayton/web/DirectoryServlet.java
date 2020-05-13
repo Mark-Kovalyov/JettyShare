@@ -1,7 +1,7 @@
 package mayton.web;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,14 +11,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.http.HttpResponse;
+// Since Java-11
+//import java.net.http.HttpResponse;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
+import static mayton.web.Config.FILE_PATH_SEPARATOR;
+import static mayton.web.JettyMediaDiskUtils.normalizeFilePath;
 import static mayton.web.MediaStringUtils.*;
 import static mayton.web.MimeHelper.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
@@ -37,8 +40,14 @@ public class DirectoryServlet extends HttpServlet {
     }
 
     // Accept-Ranges: bytes
+    // Cache-Control: no-cache, no-store, must-revalidate
+    // Pragma: no-cache
+    // Expires: 0
     private void enrichResponeByStandardTags(HttpServletResponse resp) {
         resp.addHeader("Accept-Ranges", "bytes");
+        resp.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        resp.addHeader("Pragma", "no-cache");
+        resp.addHeader("Expires", "0");
     }
 
     private void printDocumentHeader(PrintWriter out, String directory) {
@@ -73,17 +82,18 @@ public class DirectoryServlet extends HttpServlet {
     }
 
     private void printRow(PrintWriter out, String name, String url, String lastModified, String size, boolean withAudio) {
+        String normalizedUrl = StringUtil.replace(url, FILE_PATH_SEPARATOR, "/");
         out.printf(
                 "<tr>\n" +
                 " <td class=\"name\"><a href=\"%s\">%s&nbsp;</a></td>\n" +
                 " <td class=\"lastmodified\">%s&nbsp;</td>\n" +
-                " <td class=\"size\">%s&nbsp;</td>\n", url, name, lastModified, size);
+                " <td class=\"size\">%s&nbsp;</td>\n", normalizedUrl, name, lastModified, size);
         if (withAudio) {
             Optional<String> optionalExtension = MediaStringUtils.getExtension(url);
             if (getMimeByExtension(optionalExtension).isPresent()) {
                 out.print(" <td class='player'>");
                 out.print("  <audio controls>");
-                out.printf("   <source src=\"%s\" type=\"%s\">", url, getMimeByExtension(optionalExtension).get());
+                out.printf("   <source src=\"%s\" type=\"%s\">", normalizedUrl, getMimeByExtension(optionalExtension).get());
                 out.print("  </audio>");
                 out.print(" </td>");
             }
@@ -101,50 +111,73 @@ public class DirectoryServlet extends HttpServlet {
 
 
     // globalPath ::= root + "/" + localPath
-    //
 
-
-    // TODO: Add content-range
+    @SuppressWarnings("java:S3655")
     public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        enrichResponeByStandardTags(response);
         String url = request.getParameter("load");
         String range = request.getHeader("Range");
+        response.setContentType(getMimeByExtenensionOrOctet(getExtension(url)));
+        OutputStream outputStream = response.getOutputStream();
+        String loadFilePath = normalizeFilePath(root + FILE_PATH_SEPARATOR + URLDecoder.decode(request.getParameter("load"), "UTF-8"));
+        logger.info("loadFilePath = {}", loadFilePath);
         if (range != null) {
-            logger.info("Request range uploading of {}", url);
-            Optional<Pair<Long, Long>> longLongPair = decodeRange(range);
-            if (longLongPair.isPresent()) {
-                long from = longLongPair.get().getLeft();
-                long to = longLongPair.get().getRight();
-                response.setContentType(getMimeByExtenensionOrOctet(getExtension(url))); //);
-                OutputStream outputStream = response.getOutputStream();
-                long res = IOUtils.copyLarge(
-                        new FileInputStream(root + "/" + request.getParameter("load")),
-                        outputStream,
-                        from,
-                        to
-                );
-                enrichResponeByStandardTags(response);
-                response.setStatus(SC_OK);
+            logger.info("Request range '{}' uploading of {}", range, url);
+            Optional<HttpRequestRange> rangeOptional = decodeRange(range);
+            if (rangeOptional.isPresent()) {
+                HttpRequestRange requestRange = rangeOptional.get();
+                // Sample:
+                //  Content-Range: bytes=0-
+                //  Content-Range: bytes 0-1023/146515
+                //  Content-Length: 1024
+                response.addHeader("Content-Range", range + "/" + JettyMediaDiskUtils.detectFileLength(loadFilePath));
+                if (requestRange.getLength().isPresent()) {
+                    response.addHeader("Content-Length", String.valueOf(requestRange.getLength().get()));
+                }
+                response.setStatus(SC_PARTIAL_CONTENT);
+                logger.info("[1]");
+                long res = 0;
+                if (requestRange.to.isPresent() && requestRange.from.isPresent()) {
+                    logger.info("[2.1]");
+                    try (InputStream inputStream = new FileInputStream(loadFilePath)) {
+                        res = JettyMediaDiskUtils.copyLarge(
+                                inputStream,
+                                outputStream,
+                                requestRange.from.get(),
+                                requestRange.getLength().get()
+                        );
+                    }
+                } else if (requestRange.from.isPresent()) {
+                    logger.info("[2.2]");
+                    try (InputStream inputStream = new FileInputStream(loadFilePath)) {
+                        inputStream.skip(requestRange.from.get());
+                        res = JettyMediaDiskUtils.copyLarge(inputStream, outputStream);
+                    }
+                } else if (requestRange.to.isPresent()) {
+                    logger.info("[2.3]");
+                    try (InputStream inputStream = new FileInputStream(loadFilePath)) {
+                        res = JettyMediaDiskUtils.copyLarge(
+                                inputStream,
+                                outputStream,
+                                0,
+                                requestRange.to.get()
+                        );
+                    }
+                }
+                logger.trace("loaded {} bytes", res);
             } else {
-                enrichResponeByStandardTags(response);
                 response.setStatus(SC_BAD_REQUEST);
             }
-            // TODO:
-        } else {            //
-            // curl http://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023"
+        } else {
             logger.info("Request full uploading of {}", url);
-            response.setContentType(getMimeByExtenensionOrOctet(getExtension(url))); //);
-            OutputStream outputStream = response.getOutputStream();
-            long res = IOUtils.copyLarge(new FileInputStream(root + "/" + request.getParameter("load")), outputStream);
+            long res = JettyMediaDiskUtils.copyLarge(new FileInputStream(loadFilePath), outputStream);
             logger.info("Finished uploading of {} bytes", res);
-            // Content-Range: bytes 0-1023/146515
-            // Content-Length: 1024
-            enrichResponeByStandardTags(response);
             response.setStatus(SC_OK);
         }
     }
 
     private void dumpRequestParams(HttpServletRequest request) {
-        logger.info("GET uri = {} user = {}, host = {}, url = {}, uri = {}",
+        logger.info("GET uri = {} user = {}, host = {}, url = {}",
                 request.getRequestURI(),
                 request.getRemoteUser(),
                 request.getRemoteHost(),
@@ -152,7 +185,6 @@ public class DirectoryServlet extends HttpServlet {
         request.getParameterMap().entrySet().stream().forEach(item -> {
             logger.info(" {} : '{}'", item.getKey(), item.getValue());
         });
-        logger.info("");
     }
 
     @Override
@@ -175,9 +207,9 @@ public class DirectoryServlet extends HttpServlet {
         String globalPath;
 
         if (isBlank(localPath) || localPath.equals("/")) {
-            globalPath = root;
+            globalPath = normalizeFilePath(root);
         } else {
-            globalPath = root + "/" + localPath;
+            globalPath = normalizeFilePath(root + FILE_PATH_SEPARATOR + localPath);
         }
 
         dir = new File(globalPath);
@@ -193,7 +225,7 @@ public class DirectoryServlet extends HttpServlet {
         if (isBlank(localPath) || localPath.equals("/")) {
             printRow(out, "[..]", "", "", "", false);
         } else {
-            printRow(out, "[..]", "?lp=" + cutLeaveFromPath(localPath), "", "", false);
+            printRow(out, "[..]", "?lp=" + (cutLeaveFromWebPath(localPath).isPresent() ? cutLeaveFromWebPath(localPath).get() : ""), "", "", false);
         }
 
             File[] listFiles = dir.listFiles();
@@ -204,7 +236,7 @@ public class DirectoryServlet extends HttpServlet {
                         String nodeGlobalPath = directory.toPath().toString();
                         String localUrl = trimPrefix(root, nodeGlobalPath);
                         printRow(out,
-                                "[" + getLeaveFromPath(nodeGlobalPath).orElse("[empty]") + "]",
+                                "[" + getLeaveFromFilePath(nodeGlobalPath).orElse("[empty]") + "]",
                                 "?lp=" + localUrl,
                                 simpleDateFormat.format(new Date(directory.lastModified())),
                                 "", false);
@@ -215,7 +247,7 @@ public class DirectoryServlet extends HttpServlet {
                     .filter(node -> !node.isDirectory())
                     .forEach(node -> {
                         String nodeGlobalPath = node.toPath().toString();
-                        Optional<String> optionalName = getLeaveFromPath(nodeGlobalPath);
+                        Optional<String> optionalName = getLeaveFromFilePath(nodeGlobalPath);
                         optionalName.ifPresent(s -> printRow(out,
                                 s,
                                 "?load=" + trimPrefix(root, nodeGlobalPath),
@@ -234,13 +266,13 @@ public class DirectoryServlet extends HttpServlet {
                         .filter(node -> MimeHelper.isVideo(node.toPath().toString()))
                         .forEach(node -> {
                             String nodeGlobalPath = node.toPath().toString();
-                            out.printf("<h5>%s</h5>\n", getLeaveFromPath(nodeGlobalPath));
-                            out.printf("<video width = \"640\" height = \"480\" controls>\n");
-                            out.printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
+                            out.printf("<h5>%s</h5>\n", getLeaveFromFilePath(nodeGlobalPath))
+                               .printf("<video width = \"640\" height = \"480\" controls>\n")
+                               .printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
                                     trimPrefix(root, nodeGlobalPath),
-                                    getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)));
-                            out.printf("</video>\n");
-                            out.printf("<br>\n");
+                                    getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)))
+                               .printf("</video>\n")
+                               .printf("<br>\n");
                         });
             }
 

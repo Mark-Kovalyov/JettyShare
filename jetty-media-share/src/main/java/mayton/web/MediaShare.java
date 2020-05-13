@@ -1,6 +1,5 @@
 package mayton.web;
 
-import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.*;
@@ -10,15 +9,8 @@ import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.RegEx;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
-import static java.lang.System.getProperty;
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SECURITY;
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SESSIONS;
 
@@ -78,6 +70,7 @@ public class MediaShare {
         );
 
         server.setHandler(handlers);
+
 
         // Add the handlers to the server and start jetty.
         server.setHandler(handlers);

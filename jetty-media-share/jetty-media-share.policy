@@ -1,8 +1,22 @@
 grant {
       permission java.io.FilePermission "*", "read,write,delete";
+
       permission java.util.PropertyPermission "user.dir", "read";
       permission java.util.PropertyPermission "java.runtime.name", "read";
-      permission java.net.SocketPermission "localhost:8082", "connect, resolve";
-      permission java.util.PropertyPermision "*", "read,write";
-};
+      permission java.util.PropertyPermission "*", "read,write";
+      permission java.util.PropertyPermission "log4j.configurationFile", "write";
 
+      permission java.net.SocketPermission "localhost:8082", "accept, connect, resolve, listen";
+
+      permission java.util.LoggingPermission "*", "read,write";
+      permission java.io.SerializablePermission "*", "enableSubclassImplementation, enableSubstitution";      
+
+      # TODO: Fix
+      permission java.lang.management.ManagementPermission  "java.lang.reflect.ReflectPermission", "suppressAccessChecks";
+     
+      permission javax.management.MBeanServerPermission "createMBeanServer";
+      permission javax.management.MBeanPermission "org.eclipse.jetty.server.Server*", "registerMBean";
+      permission javax.management.MBeanPermission "org.eclipse.jetty.server.Server#-[org.eclipse.jetty.server:id=0,type=server]", "registerMBean";
+
+      permission java.lang.RuntimePermission "accessDeclaredMembers";
+};

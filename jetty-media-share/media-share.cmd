@@ -1,3 +1,3 @@
-java -jar jetty-media-share-1.0.jar
+java -jar target\jetty-media-share-1.0.jar localhost 8082 ~
 
 

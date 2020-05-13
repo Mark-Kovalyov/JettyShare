@@ -4,6 +4,6 @@ import java.io.File;
 
 public class Config {
 
-    public String SEPARATOR = File.separator;
+    public static String FILE_PATH_SEPARATOR = File.separator;
 
 }

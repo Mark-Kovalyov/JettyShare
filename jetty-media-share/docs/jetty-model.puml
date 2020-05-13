@@ -9,7 +9,7 @@ object DefaultHandler
 object ContextHandler
 object RequestLog
 
-Server *-- ContextHandle
+Server *-- ContextHandler
 Server o-- SocketConnector
 Server o-- ServerConnector
 Server *-- HandlerCollection

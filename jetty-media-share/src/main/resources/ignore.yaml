@@ -1,0 +1,6 @@
+folders :
+  - "System Volume Information"
+  - $RECYCLE.BIN
+
+fileExtensions : [ tmp ]
+
