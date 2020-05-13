@@ -34,14 +34,17 @@ public class DirectoryServlet extends HttpServlet {
         this.root = root;
     }
 
-    // Accept-Ranges: bytes
-    // Cache-Control: no-cache, no-store, must-revalidate
-    // Pragma: no-cache
-    // Expires: 0
-    private void enrichResponeByStandardTags(HttpServletResponse resp) {
+    private void upgradeForNonCaching(HttpServletResponse resp) {
         resp.addHeader("Accept-Ranges", "bytes");
         resp.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        resp.addHeader("Pragma", "no-cache");
+        //resp.addHeader("Pragma", "no-cache");
+        resp.addHeader("Expires", "0");
+    }
+
+    private void upgradeFor24HourCaching(HttpServletResponse resp) {
+        resp.addHeader("Accept-Ranges", "bytes");
+        resp.addHeader("Cache-Control", "max-age=" + (60 * 60 * 24));
+        //resp.addHeader("Pragma", "cache");
         resp.addHeader("Expires", "0");
     }
 
@@ -110,7 +113,6 @@ public class DirectoryServlet extends HttpServlet {
 
     @SuppressWarnings({"java:S3655", "java:S2674"})
     public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        enrichResponeByStandardTags(response);
         String url = request.getParameter("load");
         String range = request.getHeader("Range");
         response.setContentType(getMimeByExtenensionOrOctet(getExtension(url)));
@@ -122,10 +124,6 @@ public class DirectoryServlet extends HttpServlet {
             Optional<HttpRequestRange> rangeOptional = decodeRange(range);
             if (rangeOptional.isPresent()) {
                 HttpRequestRange requestRange = rangeOptional.get();
-                // Sample:
-                //  Content-Range: bytes=0-
-                //  Content-Range: bytes 0-1023/146515
-                //  Content-Length: 1024
                 response.addHeader("Content-Range", range + "/" + JettyMediaDiskUtils.detectFileLength(loadFilePath));
                 if (requestRange.getLength().isPresent()) {
                     response.addHeader("Content-Length", String.valueOf(requestRange.getLength().get()));
@@ -188,8 +186,11 @@ public class DirectoryServlet extends HttpServlet {
         String localPath = request.getParameter("lp");
 
         if (request.getParameterMap().containsKey("load")) {
+            upgradeFor24HourCaching(response);
             onLoad(request, response);
             return;
+        } else {
+            upgradeForNonCaching(response);
         }
 
         logger.info("localPath = '{}'", localPath);
