@@ -266,7 +266,7 @@ public class DirectoryServlet extends HttpServlet {
                         .filter(node -> MimeHelper.isVideo(node.toPath().toString()))
                         .forEach(node -> {
                             String nodeGlobalPath = node.toPath().toString();
-                            out.printf("<h5>%s</h5>\n", getLeaveFromFilePath(nodeGlobalPath))
+                            out.printf("<h5>%s</h5>\n", getLeaveFromFilePath(nodeGlobalPath).orElse(""))
                                .printf("<video width = \"640\" height = \"480\" controls preload=\"metadata\">\n")
                                .printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
                                     trimPrefix(root, nodeGlobalPath),
