@@ -23,7 +23,7 @@ import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SECURITY;
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SESSIONS;
 
 public class MediaShare {
-    
+
 
     static Logger logger = LoggerFactory.getLogger("JettyShare");
 
