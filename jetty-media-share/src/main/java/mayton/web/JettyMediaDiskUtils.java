@@ -38,7 +38,7 @@ public class JettyMediaDiskUtils {
         long remain = toSkip;
         while (remain > 0) {
             final long n = input.read(SKIP_BYTE_BUFFER, 0, (int) Math.min(remain, SKIP_BUFFER_SIZE));
-            logger.info("skip {} bytes", n);
+            logger.trace("skip {} bytes", n);
             if (n < 0) { // EOF
                 break;
             }
@@ -75,7 +75,7 @@ public class JettyMediaDiskUtils {
         while (EOF != (n = input.read(buffer))) {
             output.write(buffer, 0, n);
             count += n;
-            logger.info("wrote {} bytes", n);
+            logger.trace("wrote {} bytes", n);
         }
         return count;
     }
@@ -97,7 +97,7 @@ public class JettyMediaDiskUtils {
         long totalRead = 0;
         while (bytesToRead > 0 && EOF != (read = input.read(buffer, 0, bytesToRead))) {
             output.write(buffer, 0, read);
-            logger.info("wrote {} bytes", read);
+            logger.trace("wrote {} bytes", read);
             totalRead += read;
             if (length > 0) { // only adjust length if not reading to the end
                 // Note the cast must work because buffer.length is an integer
