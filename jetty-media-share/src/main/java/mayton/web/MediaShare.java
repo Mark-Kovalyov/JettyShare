@@ -41,41 +41,37 @@ public class MediaShare {
                 logger.info("{} {}", request.getRemoteHost(), request.getRequestURI()
         ));
 
-        ServerConnector connector = new ServerConnector(server);
+        try(ServerConnector connector = new ServerConnector(server)) {
 
-        int port    = Integer.parseInt(args[1]);
-        String host = args[0];
+            int port = Integer.parseInt(args[1]);
+            String host = args[0];
 
-        connector.setPort(port);
-        connector.setHost(host);
-        connector.setName("Connector-1");
+            connector.setPort(port);
+            connector.setHost(host);
+            connector.setName("Connector-1");
 
-        server.setConnectors(new Connector[] { connector });
+            server.setConnectors(new Connector[]{connector});
 
-        ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
+            ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
 
-        //servletContextHandler.setContextPath("/root");
-        servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
+            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
 
-        ResourceHandler resourceHandler = new ResourceHandler();
-        resourceHandler.setResourceBase("css");
-        resourceHandler.setDirectoriesListed(false);
+            ResourceHandler resourceHandler = new ResourceHandler();
+            resourceHandler.setResourceBase("css");
+            resourceHandler.setDirectoriesListed(false);
 
-        HandlerCollection handlers = new HandlerCollection();
+            HandlerCollection handlers = new HandlerCollection();
 
-        handlers.setHandlers(new Handler[] {
-                resourceHandler,
-                servletContextHandler,
-                new DefaultHandler() }
-        );
+            handlers.setHandlers(new Handler[]{
+                    resourceHandler,
+                    servletContextHandler,
+                    new DefaultHandler()}
+            );
 
-        server.setHandler(handlers);
-
-
-        // Add the handlers to the server and start jetty.
-        server.setHandler(handlers);
-        server.start();
-        server.join();
+            server.setHandler(handlers);
+            server.start();
+            server.join();
+        }
     }
 
     public static void main(String[] args) throws Exception {

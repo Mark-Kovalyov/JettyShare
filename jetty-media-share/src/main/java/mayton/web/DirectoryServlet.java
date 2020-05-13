@@ -1,18 +1,13 @@
 package mayton.web;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-// Since Java-11
-//import java.net.http.HttpResponse;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,13 +22,13 @@ import static mayton.web.MimeHelper.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 import static org.eclipse.jetty.util.StringUtil.isBlank;
 
+@SuppressWarnings({"java:S3457","java:S2226"})
 public class DirectoryServlet extends HttpServlet {
 
-    static Logger logger = LoggerFactory.getLogger("DirectoryServlet");
+    static Logger logger = LoggerFactory.getLogger(DirectoryServlet.class);
 
-    ServletConfig servletConfig = getServletConfig();
-
-    String root = "~";
+    // TODO : CERT, MSC11-J. - Do not let session information leak within a servlet
+    private String root = "~";
 
     public DirectoryServlet(String root) {
         this.root = root;
@@ -81,6 +76,7 @@ public class DirectoryServlet extends HttpServlet {
         out.print("</thead>\n");
     }
 
+    @SuppressWarnings("java:S3655")
     private void printRow(PrintWriter out, String name, String url, String lastModified, String size, boolean withAudio) {
         String normalizedUrl = StringUtil.replace(url, FILE_PATH_SEPARATOR, "/");
         out.printf(
@@ -112,15 +108,15 @@ public class DirectoryServlet extends HttpServlet {
 
     // globalPath ::= root + "/" + localPath
 
-    @SuppressWarnings("java:S3655")
-    public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @SuppressWarnings({"java:S3655", "java:S2674"})
+    public void onLoad(HttpServletRequest request, HttpServletResponse response) {
         enrichResponeByStandardTags(response);
         String url = request.getParameter("load");
         String range = request.getHeader("Range");
         response.setContentType(getMimeByExtenensionOrOctet(getExtension(url)));
         OutputStream outputStream = response.getOutputStream();
         String loadFilePath = normalizeFilePath(root + FILE_PATH_SEPARATOR + URLDecoder.decode(request.getParameter("load"), "UTF-8"));
-        logger.info("loadFilePath = {}", loadFilePath);
+        logger.trace("loadFilePath = {}", loadFilePath);
         if (range != null) {
             logger.info("Request range '{}' uploading of {}", range, url);
             Optional<HttpRequestRange> rangeOptional = decodeRange(range);
@@ -135,10 +131,8 @@ public class DirectoryServlet extends HttpServlet {
                     response.addHeader("Content-Length", String.valueOf(requestRange.getLength().get()));
                 }
                 response.setStatus(SC_PARTIAL_CONTENT);
-                logger.info("[1]");
                 long res = 0;
                 if (requestRange.to.isPresent() && requestRange.from.isPresent()) {
-                    logger.info("[2.1]");
                     try (InputStream inputStream = new FileInputStream(loadFilePath)) {
                         res = JettyMediaDiskUtils.copyLarge(
                                 inputStream,
@@ -148,13 +142,11 @@ public class DirectoryServlet extends HttpServlet {
                         );
                     }
                 } else if (requestRange.from.isPresent()) {
-                    logger.info("[2.2]");
                     try (InputStream inputStream = new FileInputStream(loadFilePath)) {
                         inputStream.skip(requestRange.from.get());
                         res = JettyMediaDiskUtils.copyLarge(inputStream, outputStream);
                     }
                 } else if (requestRange.to.isPresent()) {
-                    logger.info("[2.3]");
                     try (InputStream inputStream = new FileInputStream(loadFilePath)) {
                         res = JettyMediaDiskUtils.copyLarge(
                                 inputStream,
@@ -166,12 +158,13 @@ public class DirectoryServlet extends HttpServlet {
                 }
                 logger.trace("loaded {} bytes", res);
             } else {
+                logger.warn("Bad request!");
                 response.setStatus(SC_BAD_REQUEST);
             }
         } else {
             logger.info("Request full uploading of {}", url);
             long res = JettyMediaDiskUtils.copyLarge(new FileInputStream(loadFilePath), outputStream);
-            logger.info("Finished uploading of {} bytes", res);
+            logger.trace("loaded {} bytes", res);
             response.setStatus(SC_OK);
         }
     }
@@ -182,13 +175,12 @@ public class DirectoryServlet extends HttpServlet {
                 request.getRemoteUser(),
                 request.getRemoteHost(),
                 request.getRequestURL());
-        request.getParameterMap().entrySet().stream().forEach(item -> {
-            logger.info(" {} : '{}'", item.getKey(), item.getValue());
-        });
+        request.getParameterMap().entrySet().stream().forEach(item -> logger.info(" {} : '{}'", item.getKey(), item.getValue()));
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @SuppressWarnings({"java:S3655"})
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         dumpRequestParams(request);
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -225,7 +217,9 @@ public class DirectoryServlet extends HttpServlet {
         if (isBlank(localPath) || localPath.equals("/")) {
             printRow(out, "[..]", "", "", "", false);
         } else {
-            printRow(out, "[..]", "?lp=" + (cutLeaveFromWebPath(localPath).isPresent() ? cutLeaveFromWebPath(localPath).get() : ""), "", "", false);
+            printRow(out, "[..]", "?lp=" +
+                    (cutLeaveFromWebPath(localPath).isPresent() ? cutLeaveFromWebPath(localPath).get() : ""),
+                    "", "", false);
         }
 
             File[] listFiles = dir.listFiles();
@@ -260,7 +254,7 @@ public class DirectoryServlet extends HttpServlet {
             printTableFooter(out);
 
             if (directoryContainsVideo(listFiles)) {
-                logger.info("Contains video");
+                logger.trace("Contains video");
                 Arrays.stream(listFiles)
                         .filter(node -> !node.isDirectory())
                         .filter(node -> MimeHelper.isVideo(node.toPath().toString()))

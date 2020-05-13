@@ -16,11 +16,13 @@ public class JettyMediaDiskUtils {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
 
-    static Logger logger = LoggerFactory.getLogger("JettyMediaDiskUtils");
+    static Logger logger = LoggerFactory.getLogger(JettyMediaDiskUtils.class);
 
     public static final int EOF = -1;
 
     private static byte[] SKIP_BYTE_BUFFER;
+
+    private JettyMediaDiskUtils(){}
 
     public static long copyLarge(final InputStream input, final OutputStream output, final long inputOffset,
                                  final long length) throws IOException {

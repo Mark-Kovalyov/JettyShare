@@ -19,13 +19,16 @@ public class MimeHelper {
         properties = new Properties();
         try {
             properties.load(MimeHelper.class.getClassLoader().getResourceAsStream("mime.properties"));
-            properties.stringPropertyNames().stream().forEach(item -> {
-                logger.info("Init mime: {} -> {}", item, properties.get(item));
-            });
+            properties.stringPropertyNames()
+                    .stream()
+                    .forEach(item -> logger.info("Init mime: {} -> {}", item, properties.get(item)));
+
         } catch (Exception ex) {
             logger.error(ex.toString());
         }
     }
+
+    private MimeHelper(){}
 
     public static String getMimeByExtenensionOrOctet(Optional<String> extension) {
         return getMimeByExtensionOrDefault(extension, "application/octet-stream");
@@ -33,22 +36,21 @@ public class MimeHelper {
 
     public static String getMimeByExtensionOrDefault(Optional<String> extension, @NotNull String replacement) {
         if (!extension.isPresent()) return replacement;
-        String res = (String) properties.getOrDefault(extension.get(), replacement);
-        return res;
+        return (String) properties.getOrDefault(extension.get(), replacement);
     }
 
 
     public static Optional<String> getMimeByExtension(Optional<String> extension) {
         if (!extension.isPresent()) {
-            //logger.info("getMimeByExtension {} -> application/octet-stream", extension);
+            logger.trace("getMimeByExtension {} -> application/octet-stream", extension);
             return Optional.of("application/octet-stream");
         }
         String res = properties.getProperty(extension.get());
         if (res == null) {
-            //logger.info("getMimeByExtension {} -> EMPTY", extension, res);
+            logger.trace("getMimeByExtension {} -> EMPTY", extension);
             return Optional.empty();
         }
-        //logger.info("getMimeByExtension {} -> {}", extension, res);
+        logger.trace("getMimeByExtension {} -> {}", extension, res);
         return Optional.of(res);
     }
 

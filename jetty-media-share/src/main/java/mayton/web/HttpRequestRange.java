@@ -4,8 +4,8 @@ import java.util.Optional;
 
 public final class HttpRequestRange {
 
-    public Optional<Long> from;
-    public Optional<Long> to;
+    public final Optional<Long> from;
+    public final Optional<Long> to;
 
     public HttpRequestRange(Optional<Long> from, Optional<Long> to) {
         this.from = from;
