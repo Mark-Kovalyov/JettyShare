@@ -109,7 +109,7 @@ public class DirectoryServlet extends HttpServlet {
     // globalPath ::= root + "/" + localPath
 
     @SuppressWarnings({"java:S3655", "java:S2674"})
-    public void onLoad(HttpServletRequest request, HttpServletResponse response) {
+    public void onLoad(HttpServletRequest request, HttpServletResponse response) throws IOException {
         enrichResponeByStandardTags(response);
         String url = request.getParameter("load");
         String range = request.getHeader("Range");
