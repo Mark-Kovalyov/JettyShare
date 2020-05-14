@@ -11,7 +11,7 @@ import static mayton.web.MediaStringUtils.getExtension;
 
 public class MimeHelper {
 
-    static Logger logger = LoggerFactory.getLogger("MimeHelper");
+    static Logger logger = LoggerFactory.getLogger(MimeHelper.class);
 
     private static Properties properties;
 
@@ -20,7 +20,6 @@ public class MimeHelper {
         try {
             properties.load(MimeHelper.class.getClassLoader().getResourceAsStream("mime.properties"));
             properties.stringPropertyNames()
-                    .stream()
                     .forEach(item -> logger.info("Init mime: {} -> {}", item, properties.get(item)));
 
         } catch (Exception ex) {
@@ -35,13 +34,13 @@ public class MimeHelper {
     }
 
     public static String getMimeByExtensionOrDefault(Optional<String> extension, @NotNull String replacement) {
-        if (!extension.isPresent()) return replacement;
+        if (extension.isEmpty()) return replacement;
         return (String) properties.getOrDefault(extension.get(), replacement);
     }
 
 
     public static Optional<String> getMimeByExtension(Optional<String> extension) {
-        if (!extension.isPresent()) {
+        if (extension.isEmpty()) {
             logger.trace("getMimeByExtension {} -> application/octet-stream", extension);
             return Optional.of("application/octet-stream");
         }
@@ -56,23 +55,31 @@ public class MimeHelper {
 
     public static boolean isVideo(@NotNull String path) {
         Optional<String> extension = getExtension(path);
-        if (!extension.isPresent()) {
+        if (extension.isEmpty()) {
             return false;
         } else {
             Optional<String> mime = getMimeByExtension(extension);
-            if (!mime.isPresent()) return false;
-            return mime.get().startsWith("video/");
+            return mime.map(s -> s.startsWith("video/")).orElse(false);
+        }
+    }
+
+    public static boolean isPicture(@NotNull String path) {
+        Optional<String> extension = getExtension(path);
+        if (extension.isEmpty()) {
+            return false;
+        } else {
+            Optional<String> mime = getMimeByExtension(extension);
+            return mime.map(s -> s.startsWith("image/")).orElse(false);
         }
     }
 
     public static boolean isAudio(@NotNull String path) {
         Optional<String> extension = getExtension(path);
-        if (!extension.isPresent()) {
+        if (extension.isEmpty()) {
             return false;
         } else {
             Optional<String> mime = getMimeByExtension(extension);
-            if (!mime.isPresent()) return false;
-            return mime.get().startsWith("audio/");
+            return mime.map(s -> s.startsWith("audio/")).orElse(false);
         }
     }
 

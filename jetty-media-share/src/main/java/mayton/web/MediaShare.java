@@ -16,8 +16,7 @@ import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SESSIONS;
 
 public class MediaShare {
 
-
-    static Logger logger = LoggerFactory.getLogger("JettyShare");
+    static Logger logger = LoggerFactory.getLogger(MediaShare.class);
 
     public void  initJMX(Server server){
         // Setup JMX
@@ -25,10 +24,6 @@ public class MediaShare {
         server.addEventListener(mbContainer);
         server.addBean(mbContainer);
         server.addBean(Log.getLog());
-    }
-
-    public MediaShare(){
-
     }
 
     public MediaShare(String[] args) throws Exception {
@@ -43,8 +38,8 @@ public class MediaShare {
 
         try(ServerConnector connector = new ServerConnector(server)) {
 
-            int port = Integer.parseInt(args[1]);
-            String host = args[0];
+            int port = Integer.parseInt("8082");
+            String host = "localhost"; //args[0];
 
             connector.setPort(port);
             connector.setHost(host);
@@ -54,7 +49,7 @@ public class MediaShare {
 
             ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
 
-            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
+            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet("c:\\")), "/");
 
             ResourceHandler resourceHandler = new ResourceHandler();
             resourceHandler.setResourceBase("css");

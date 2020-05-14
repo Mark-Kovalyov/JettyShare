@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Optional;
 
+// This is port from Apache Commons IO with fine-grained logging to detect minimal IO-activities.
 public class JettyMediaDiskUtils {
 
     private static final int SKIP_BUFFER_SIZE = 2048;
@@ -115,5 +117,9 @@ public class JettyMediaDiskUtils {
 
     public static String normalizeFilePath(String path) {
         return StringUtils.replace(path, "/", Config.FILE_PATH_SEPARATOR);
+    }
+
+    public static Optional<String> extractMD5fromFile(String loadFilePath) {
+        return Optional.empty();
     }
 }

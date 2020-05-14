@@ -4,34 +4,18 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static mayton.web.Config.FILE_PATH_SEPARATOR;
 import static org.eclipse.jetty.util.StringUtil.isBlank;
 
 public class MediaStringUtils {
 
-    static Logger logger = LoggerFactory.getLogger("MediaStringUtils");
+    static Logger logger = LoggerFactory.getLogger(MediaStringUtils.class);
 
-    public static Optional<HttpRequestRange> decodeRange(String rangeAttribute) {
-        Pattern pattern = Pattern.compile("bytes=(?<from>\\d+)?-(?<to>\\d+)?");
-        Matcher m = pattern.matcher(rangeAttribute);
-        if (m.matches()) {
-            try {
-                Optional<Long> optFrom = m.group("from") == null ? Optional.empty() : Optional.of(Long.parseLong(m.group("from")));
-                Optional<Long> optTo = m.group("to") == null ? Optional.empty() : Optional.of(Long.parseLong(m.group("to")));
-                return Optional.of(new HttpRequestRange(optFrom, optTo));
-            } catch (NumberFormatException ex) {
-                logger.warn("[1] Unable to decode range from : '{}'", rangeAttribute);
-                return Optional.empty();
-            }
-        } else {
-            logger.warn("[2] Unable to decode range from : '{}'", rangeAttribute);
-            return Optional.empty();
-        }
-    }
+    private MediaStringUtils() {}
 
     public static Optional<String> getExtension(@NotNull String path) {
         int index = path.lastIndexOf('.');
@@ -57,6 +41,36 @@ public class MediaStringUtils {
             return Optional.empty();
         }
         return Optional.of(path.substring(0, path.lastIndexOf('/')));
+    }
+
+    public static boolean directoryContainsVideo(File[] listFiles) {
+        Optional<String> res = Arrays.stream(listFiles)
+                .filter(node -> !node.isDirectory())
+                .map(node -> node.toPath().toString())
+                .filter(MimeHelper::isVideo)
+                .findAny();
+
+        return res.isPresent();
+    }
+
+    public static boolean directoryContainsAudio(File[] listFiles) {
+        Optional<String> res = Arrays.stream(listFiles)
+                .filter(node -> !node.isDirectory())
+                .map(node -> node.toPath().toString())
+                .filter(MimeHelper::isAudio)
+                .findAny();
+
+        return res.isPresent();
+    }
+
+    public static boolean directoryContainsPictures(File[] listFiles) {
+        Optional<String> res = Arrays.stream(listFiles)
+                .filter(node -> !node.isDirectory())
+                .map(node -> node.toPath().toString())
+                .filter(MimeHelper::isPicture)
+                .findAny();
+
+        return res.isPresent();
     }
 
 }

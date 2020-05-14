@@ -1,7 +1,9 @@
 package mayton.web;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Optional;
 
+@Immutable
 public final class HttpRequestRange {
 
     public final Optional<Long> from;

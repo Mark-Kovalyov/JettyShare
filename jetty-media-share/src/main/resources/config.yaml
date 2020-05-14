@@ -1,0 +1,10 @@
+video :
+  preload : "metadata"
+  width : 320
+  height : 240
+
+audio :
+  preload : "metadata"
+
+pictures :
+  ribbonWidth : 640
