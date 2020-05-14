@@ -91,7 +91,7 @@ public class DirectoryServlet extends HttpServlet {
             Optional<String> optionalExtension = MediaStringUtils.getExtension(url);
             if (getMimeByExtension(optionalExtension).isPresent()) {
                 out.print(" <td class='player'>");
-                out.print("  <audio controls>");
+                out.print("  <audio controls preload=\"metadata\">");
                 out.printf("   <source src=\"%s\" type=\"%s\">", normalizedUrl, getMimeByExtension(optionalExtension).get());
                 out.print("  </audio>");
                 out.print(" </td>");
@@ -173,7 +173,7 @@ public class DirectoryServlet extends HttpServlet {
                 request.getRemoteUser(),
                 request.getRemoteHost(),
                 request.getRequestURL());
-        request.getParameterMap().entrySet().stream().forEach(item -> logger.info(" {} : '{}'", item.getKey(), item.getValue()));
+        request.getParameterMap().entrySet().forEach(item -> logger.info(" {} : '{}'", item.getKey(), item.getValue()));
     }
 
     @Override
@@ -231,7 +231,7 @@ public class DirectoryServlet extends HttpServlet {
                         String nodeGlobalPath = directory.toPath().toString();
                         String localUrl = trimPrefix(root, nodeGlobalPath);
                         printRow(out,
-                                "[" + getLeaveFromFilePath(nodeGlobalPath).orElse("[empty]") + "]",
+                                "[" + getLeaveFromFilePath(nodeGlobalPath).orElse("??????") + "]",
                                 "?lp=" + localUrl,
                                 simpleDateFormat.format(new Date(directory.lastModified())),
                                 "", false);
