@@ -38,8 +38,8 @@ public class MediaShare {
 
         try(ServerConnector connector = new ServerConnector(server)) {
 
-            int port = Integer.parseInt("8082");
-            String host = "localhost"; //args[0];
+            int port = Integer.parseInt(args[1]);
+            String host = args[0];
 
             connector.setPort(port);
             connector.setHost(host);
@@ -49,7 +49,7 @@ public class MediaShare {
 
             ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
 
-            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet("c:\\")), "/");
+            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
 
             ResourceHandler resourceHandler = new ResourceHandler();
             resourceHandler.setResourceBase("css");
