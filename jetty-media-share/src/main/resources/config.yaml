@@ -8,3 +8,9 @@ audio :
 
 pictures :
   ribbonWidth : 640
+
+thumbnails:
+  workers : 2
+  width : 64
+  height : 64
+
