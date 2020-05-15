@@ -11,6 +11,13 @@
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
             </PatternLayout>
         </File>
+
+        <File name="THUMBNAIL_FILE" fileName="logs/thumbnail-manager.log" ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
+            </PatternLayout>
+        </File>
+
     </Appenders>
 
     <Loggers>
@@ -18,5 +25,9 @@
             <AppenderRef ref="STDOUT" level="ALL"/>rjk,f
             <AppenderRef ref="FILE" level="ALL"/>
         </Root>
+
+        <Logger name="mayton.web.ThumbnailWorker" level="info">
+            <AppenderRef ref="THUMBNAIL_FILE"/>
+        </Logger>
     </Loggers>
 </Configuration>

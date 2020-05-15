@@ -29,6 +29,10 @@ public class MediaStringUtils {
         return arg.substring(prefixLength);
     }
 
+    public static boolean isHiddenFolder(@NotNull String path) {
+        return path.startsWith(".");
+    }
+
     public static Optional<String> getLeaveFromFilePath(@NotNull String path) {
         if (isBlank(path) || !path.contains(FILE_PATH_SEPARATOR)) {
             return Optional.empty();
