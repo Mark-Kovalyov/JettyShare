@@ -13,7 +13,7 @@ public class ThumbnailComponent {
     private ThreadPoolExecutor thumnailPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(Config.THUMBNAIL_THREADS);
 
     public synchronized void scheduleThumbWork(@NotNull File imageFile) {
-        thumnailPool.execute(new ThumbnailWorker(imageFile));
+        //thumnailPool.execute(new ThumbnailWorker(imageFile));
     }
 
 }
