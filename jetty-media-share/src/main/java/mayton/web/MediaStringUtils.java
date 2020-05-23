@@ -51,7 +51,7 @@ public class MediaStringUtils {
         Optional<String> res = Arrays.stream(listFiles)
                 .filter(node -> !node.isDirectory())
                 .map(node -> node.toPath().toString())
-                .filter(MimeHelper::isVideo)
+                .filter(fileName -> MimeHelper.createInstance().isVideo(fileName))
                 .findAny();
 
         return res.isPresent();
@@ -61,7 +61,7 @@ public class MediaStringUtils {
         Optional<String> res = Arrays.stream(listFiles)
                 .filter(node -> !node.isDirectory())
                 .map(node -> node.toPath().toString())
-                .filter(MimeHelper::isAudio)
+                .filter(fileName -> MimeHelper.createInstance().isAudio(fileName))
                 .findAny();
 
         return res.isPresent();
@@ -71,7 +71,7 @@ public class MediaStringUtils {
         Optional<String> res = Arrays.stream(listFiles)
                 .filter(node -> !node.isDirectory())
                 .map(node -> node.toPath().toString())
-                .filter(MimeHelper::isPicture)
+                .filter(fileName -> MimeHelper.createInstance().isPicture(fileName))
                 .findAny();
 
         return res.isPresent();

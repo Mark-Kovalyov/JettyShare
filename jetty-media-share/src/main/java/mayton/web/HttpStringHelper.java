@@ -41,7 +41,6 @@ public class HttpStringHelper {
         }
     }
 
-
     @NotNull
     public static String formatRfc1123Date(@NotNull Date date) {
         return formatDate(date, PATTERN_RFC1123);

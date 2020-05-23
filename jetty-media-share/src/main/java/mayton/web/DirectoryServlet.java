@@ -1,7 +1,6 @@
 package mayton.web;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
 import org.eclipse.jetty.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,22 +13,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static java.lang.Math.abs;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_PARTIAL_CONTENT;
 import static mayton.web.Config.FILE_PATH_SEPARATOR;
 import static mayton.web.HttpStringHelper.decodeRange;
 import static mayton.web.JettyMediaDiskUtils.normalizeFilePath;
 import static mayton.web.MediaStringUtils.*;
-import static mayton.web.MimeHelper.*;
 import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
+import static org.apache.commons.lang3.StringUtils.replace;
 import static org.eclipse.jetty.util.StringUtil.isBlank;
 
 @SuppressWarnings({"java:S3457","java:S2226"})
@@ -106,10 +103,10 @@ public class DirectoryServlet extends HttpServlet {
                 " <td class=\"size\">%s&nbsp;</td>\n", normalizedUrl, name, lastModified, size);
         if (withAudio) {
             Optional<String> optionalExtension = MediaStringUtils.getExtension(url);
-            if (getMimeByExtension(optionalExtension).isPresent()) {
+            if (MimeHelper.createInstance().getMimeByExtension(optionalExtension).isPresent()) {
                 out.print(" <td class='player'>");
                 out.print("  <audio controls preload=\"metadata\">");
-                out.printf("   <source src=\"%s\" type=\"%s\">", normalizedUrl, getMimeByExtension(optionalExtension).get());
+                out.printf("   <source src=\"%s\" type=\"%s\">", normalizedUrl, MimeHelper.createInstance().getMimeByExtension(optionalExtension).get());
                 out.print("  </audio>");
                 out.print(" </td>");
             }
@@ -133,7 +130,8 @@ public class DirectoryServlet extends HttpServlet {
         String url = request.getParameter("load");
         String thumbnail = request.getParameter("th");
         String range = request.getHeader("Range");
-        response.setContentType(getMimeByExtenensionOrOctet(getExtension(url)));
+        MimeHelper mimeHelper = MimeHelper.createInstance();
+        response.setContentType(mimeHelper.getMimeByExtenensionOrOctet(getExtension(url)));
         OutputStream outputStream = response.getOutputStream();
         String loadFilePath = normalizeFilePath(root + FILE_PATH_SEPARATOR + URLDecoder.decode(request.getParameter("load"), UTF_8));
         logger.trace("loadFilePath = {}, thumbnail = {}", loadFilePath, thumbnail);
@@ -184,7 +182,7 @@ public class DirectoryServlet extends HttpServlet {
                 upgradeForETag(response, optionalMd5.get());
             }
             long res = 0;
-            if (thumbnail.equals("Y") && MimeHelper.isPicture(url)) {
+            if ("Y".equals(thumbnail) && mimeHelper.isPicture(url)) {
                 res = IOUtils.copyLarge(new FileInputStream(
                         normalizeFilePath(Config.THUMBNAIL_HOME + FILE_PATH_SEPARATOR + URLDecoder.decode(request.getParameter("load"), UTF_8))),
                         outputStream);
@@ -272,9 +270,8 @@ public class DirectoryServlet extends HttpServlet {
                                     "?load=" + trimPrefix(root, nodeGlobalPath),
                                     simpleDateFormat.format(new Date(node.lastModified())),
                                     byteCountToDisplaySize(node.length()),
-                                    isAudio(s)));
+                                    MimeHelper.createInstance().isAudio(s)));
                         });
-
 
                 printTableFooter(out);
 
@@ -282,14 +279,14 @@ public class DirectoryServlet extends HttpServlet {
                     logger.trace("Contains video");
                     Arrays.stream(listFiles)
                             .filter(node -> !node.isDirectory())
-                            .filter(node -> MimeHelper.isVideo(node.toPath().toString()))
+                            .filter(node -> MimeHelper.createInstance().isVideo(node.toPath().toString()))
                             .forEach(node -> {
                                 String nodeGlobalPath = node.toPath().toString();
                                 out.printf("<h5>%s</h5>\n", getLeaveFromFilePath(nodeGlobalPath).orElse(""))
                                         .printf("<video width = \"640\" height = \"480\" controls preload=\"metadata\">\n")
                                         .printf("    <source src = \"?load=%s\" type = \"%s\"/>\n",
                                                 trimPrefix(root, nodeGlobalPath),
-                                                getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)))
+                                                MimeHelper.createInstance().getMimeByExtenensionOrOctet(getExtension(nodeGlobalPath)))
                                         .printf("</video>\n")
                                         .printf("<br>\n");
                             });
@@ -301,9 +298,9 @@ public class DirectoryServlet extends HttpServlet {
                     for (File node : listFiles) {
                         String nodeGlobalPath = node.toPath().toString();
                         if (abs(nodeGlobalPath.hashCode()) % 2 == 0) {
-                            if (!node.isDirectory() && MimeHelper.isPicture(nodeGlobalPath)) {
+                            if (!node.isDirectory() && MimeHelper.createInstance().isPicture(nodeGlobalPath)) {
                                 // TODO: Refine replacement with function
-                                out.printf("  <img src=\"?load=%s&th=y\">\n", StringUtil.replace(trimPrefix(root, nodeGlobalPath), FILE_PATH_SEPARATOR, "/"));
+                                out.printf("  <img src=\"?load=%s&th=y\">\n", replace(trimPrefix(root, nodeGlobalPath), FILE_PATH_SEPARATOR, "/"));
                             }
                         }
                     }
@@ -312,8 +309,8 @@ public class DirectoryServlet extends HttpServlet {
                     for (File node : listFiles) {
                         String nodeGlobalPath = node.toPath().toString();
                         if (abs(nodeGlobalPath.hashCode()) % 2 == 1) {
-                            if (!node.isDirectory() && MimeHelper.isPicture(nodeGlobalPath)) {
-                                out.printf("  <img src=\"?load=%s&th=y\">\n", StringUtil.replace(trimPrefix(root, nodeGlobalPath), FILE_PATH_SEPARATOR, "/"));
+                            if (!node.isDirectory() && MimeHelper.createInstance().isPicture(nodeGlobalPath)) {
+                                out.printf("  <img src=\"?load=%s&th=y\">\n", replace(trimPrefix(root, nodeGlobalPath), FILE_PATH_SEPARATOR, "/"));
                             }
                         }
                     }

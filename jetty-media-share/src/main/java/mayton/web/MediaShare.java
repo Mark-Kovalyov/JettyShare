@@ -81,6 +81,12 @@ public class MediaShare {
     }
 
     public MediaShare(String[] args) throws Exception {
+       /* Properties properties = new Properties();
+        properties.put("host", "localhost");
+        properties.put("port", "8082");
+        properties.put("root", "/storage");
+        go(properties);*/
+
         CommandLineParser parser = new DefaultParser();
         Options options = createOptions();
         if (args.length == 0) {
@@ -94,7 +100,6 @@ public class MediaShare {
             properties.put("host", line.getOptionValue("host"));
             properties.put("port", line.getOptionValue("port"));
             properties.put("root", line.getOptionValue("root"));
-            // Optional
             go(properties);
         }
     }
