@@ -1,5 +1,6 @@
-package mayton.web;
+package mayton.web.workers;
 
+import mayton.web.Config;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

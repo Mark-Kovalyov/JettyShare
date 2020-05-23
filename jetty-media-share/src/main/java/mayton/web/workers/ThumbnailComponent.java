@@ -1,5 +1,6 @@
-package mayton.web;
+package mayton.web.workers;
 
+import mayton.web.Config;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.concurrent.ThreadSafe;

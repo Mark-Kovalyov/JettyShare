@@ -1,5 +1,3 @@
-#!/bin/bash
+#!/bin/bash -v
 
-java -jar target/jetty-media-share-*.jar 192.168.1.200 8082 /storage
-
-
+java -jar target/jetty-media-share-*.jar --host localhost --port 8082 --root /storage

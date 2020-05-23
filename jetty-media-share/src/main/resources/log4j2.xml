@@ -26,7 +26,7 @@
             <AppenderRef ref="FILE" level="ALL"/>
         </Root>
 
-        <Logger name="mayton.web.ThumbnailWorker" level="info">
+        <Logger name="mayton.web.workers.ThumbnailWorker" level="info">
             <AppenderRef ref="THUMBNAIL_FILE"/>
         </Logger>
     </Loggers>

@@ -1,17 +1,18 @@
 package mayton.web;
 
+import org.apache.commons.cli.*;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.log.Log;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Properties;
 
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SECURITY;
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SESSIONS;
@@ -28,9 +29,16 @@ public class MediaShare {
         server.addBean(Log.getLog());
     }
 
-    public MediaShare(String[] args) throws Exception {
+    @NotNull
+    Options createOptions() {
+        return new Options()
+                .addRequiredOption("h", "host", true, "Ethernet Host Interace to listen, ex: 127.0.0.1, ::::1")
+                .addRequiredOption("p", "port", true, "Port number to listen, ex: 8081")
+                .addRequiredOption("r", "root", true, "File root, ex: /www/html");
+    }
 
 
+    public void go(Properties properties) throws Exception {
         Server server = new Server();
 
         initJMX(server);
@@ -41,8 +49,8 @@ public class MediaShare {
 
         try(ServerConnector connector = new ServerConnector(server)) {
 
-            int port = Integer.parseInt(args[1]);
-            String host = args[0];
+            int port = Integer.parseInt(properties.getProperty("port"));
+            String host = properties.getProperty("host");
 
             connector.setPort(port);
             connector.setHost(host);
@@ -52,7 +60,7 @@ public class MediaShare {
 
             ServletContextHandler servletContextHandler = new ServletContextHandler(NO_SESSIONS | NO_SECURITY);
 
-            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(args[2])), "/");
+            servletContextHandler.addServlet(new ServletHolder(new DirectoryServlet(properties.getProperty("root"))), "/");
 
             ResourceHandler resourceHandler = new ResourceHandler();
             resourceHandler.setResourceBase("css");
@@ -69,6 +77,25 @@ public class MediaShare {
             server.setHandler(handlers);
             server.start();
             server.join();
+        }
+    }
+
+    public MediaShare(String[] args) throws Exception {
+        CommandLineParser parser = new DefaultParser();
+        Options options = createOptions();
+        if (args.length == 0) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("Jetty-Media-Share", createOptions());
+            return;
+        } else {
+            Properties properties = new Properties();
+            CommandLine line = parser.parse(options, args);
+            // Mandatory
+            properties.put("host", line.getOptionValue("host"));
+            properties.put("port", line.getOptionValue("port"));
+            properties.put("root", line.getOptionValue("root"));
+            // Optional
+            go(properties);
         }
     }
 
