@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.util.List;
 import java.util.Properties;
 
 import static org.eclipse.jetty.servlet.ServletContextHandler.NO_SECURITY;
@@ -81,11 +83,11 @@ public class MediaShare {
     }
 
     public MediaShare(String[] args) throws Exception {
-       /* Properties properties = new Properties();
-        properties.put("host", "localhost");
-        properties.put("port", "8082");
-        properties.put("root", "/storage");
-        go(properties);*/
+
+        List<GarbageCollectorMXBean> gcMxBeans = ManagementFactory.getGarbageCollectorMXBeans();
+        for (GarbageCollectorMXBean gcMxBean : gcMxBeans) {
+            logger.info("GC name = {}, objectName = {}", gcMxBean.getName(), gcMxBean.getObjectName());
+        }
 
         CommandLineParser parser = new DefaultParser();
         Options options = createOptions();

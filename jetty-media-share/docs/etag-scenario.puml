@@ -1,10 +1,10 @@
 @startuml
 Client -> Server : GET /res
-Server --> Client : ETag : "12345", 200 OK
+Server --> Client : ETag : "12345", 200 OK + body
 
 Client -> Server : GET /res If-None-Match : "12345"
 Server --> Client : ETag : "12345", 304 Not Modified
 
 Client -> Server : GET /res If-None-Match : "12345"
-Server --> Client : ETag : "7890", 200 OK
+Server --> Client : ETag : "7890", 200 OK + new body
 @enduml

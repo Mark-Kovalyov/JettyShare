@@ -5,23 +5,23 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>mayton.web</groupId>
     <artifactId>jetty-media-share</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
-    <name>Chess Notation Player</name>
+    <name>Jetty media share</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <jetty.server.version>9.4.28.v20200408</jetty.server.version>
-        <jetty.servlet.version>9.4.14.v20181114</jetty.servlet.version>
+        <jetty.server.version>11.0.0</jetty.server.version>
+        <jetty.servlet.version>11.0.0</jetty.servlet.version>
 
         <httpcomponents.version>4.5.10</httpcomponents.version>
 
         <slf4j.version>1.7.30</slf4j.version>
         <java.lang.version>11</java.lang.version>
         <java.target.version>11</java.target.version>
-        <log4j2.version>2.13.2</log4j2.version>
+        <log4j2.version>2.14.0</log4j2.version>
     </properties>
 
     <dependencies>
@@ -39,9 +39,9 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.0</version>
             <scope>test</scope>
         </dependency>
 

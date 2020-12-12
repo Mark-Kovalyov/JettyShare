@@ -1,6 +1,6 @@
 @startuml
 Client -> Server : GET /res
-Server --> Client : ?
+Server --> Client : 200 OK + body
 
 Client -> Server : HEAD /res, If-Modified-Since: Wed, 21 Oct 2015 07:28:00 GMT
 Server --> Client : 304 Not Modified
